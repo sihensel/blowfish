@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <math.h>
 
@@ -9,15 +10,23 @@
 #define DATASIZE  1024
 
 /* change these to change the ciphertext and the secret key */
-#define PLAINTEXT "testing!"
-#define KEY       "the key is you"
+// #define PLAINTEXT "123"
+#define KEY       "A"
 
-int main()
+int main(int argc, char *argv[])
 {
+    if (argc == 1) {
+        printf("ERROR: requires at least on argument\n");
+        return 0 ;
+    }
+
+    // convert the input to an int and cast to to a char
+    // uint8_t p = (char) atoi(argv[1]);
+    // printf("%x\n", p);
+
 	int i, Osize, Psize, Pbyte;
 	int KOsize, KPsize, KPbyte;
 	uint8_t *encrypted,
-		*decrypted,
 	        key[KEYSIZE],
 	        data[DATASIZE];
 
@@ -25,7 +34,7 @@ int main()
 	memset(data, 0, DATASIZE);
 	memset(key,  0, KEYSIZE);
 
-	strncpy(data, PLAINTEXT, sizeof(data));
+	strncpy(data, argv[1], sizeof(data));
 	strncpy(key, KEY, sizeof(key));
 
 	Osize = strlen(data);            KOsize = strlen(key);
@@ -38,27 +47,21 @@ int main()
 
 	blowfish_init(key, KPsize);
 	
+    // printf("Input:\t%x\n", atoi(argv[1]));
+    // printf("Data before enc:\t%x\n", data);
+    // printf("Psize:\t%x\n", Psize);
 	encrypted = blowfish_encrypt(data, Psize);
 	
-	printf("encrypted data: ");
-	i = 0;
-	while (i < Psize) {
-		printf("%.2X%.2X%.2X%.2X ", encrypted[i], encrypted[i + 1],
-				encrypted[i + 2], encrypted[i + 3]);
-		printf("%.2X%.2X%.2X%.2X ", encrypted[i + 4], encrypted[i + 5],
-				encrypted[i + 6], encrypted[i + 7]);
-		i += 8;
-	}
-	printf("\n");
-
-	decrypted = blowfish_decrypt(encrypted, Psize);
-
-	/* unpadding */ 
-	memset(data, 0, Psize);
-	memmove(data, decrypted, Osize);
-	
-	printf("decrypted data: ");
-	printf("%s\n", data);
+	// printf("encrypted data: ");
+	// i = 0;
+	// while (i < Psize) {
+	// 	printf("%.2X%.2X%.2X%.2X ", encrypted[i], encrypted[i + 1],
+	// 			encrypted[i + 2], encrypted[i + 3]);
+	// 	printf("%.2X%.2X%.2X%.2X ", encrypted[i + 4], encrypted[i + 5],
+	// 			encrypted[i + 6], encrypted[i + 7]);
+	// 	i += 8;
+	// }
+	// printf("\n");
 
 	return 0;
 }

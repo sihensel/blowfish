@@ -9,21 +9,15 @@ typedef unsigned int           uint32_t;
 typedef unsigned long long int uint64_t;
 
 uint32_t 
-feistel_function(uint32_t arg);
+feistel_function(uint32_t arg, uint8_t round, uint8_t is_init);
 
 void 
-_encrypt(uint32_t *left, uint32_t *right);
-
-void
-_decrypt(uint32_t *left, uint32_t *right);
+_encrypt(uint32_t *left, uint32_t *right, uint8_t is_init);
 
 void
 blowfish_init(uint8_t key[], int padsize);
 
 uint8_t *
 blowfish_encrypt(uint8_t data[], int padsize);
-
-uint8_t *
-blowfish_decrypt(uint8_t crypt_data[], int padsize);
 
 #endif

@@ -1,23 +1,34 @@
 #include <stdlib.h>
 #include <string.h>
+#include <stdio.h>
 
 #include "blowfish.h"
 #include "constants.h"
 
 uint32_t 
-feistel_function(uint32_t arg)
+feistel_function(uint32_t arg, uint8_t round, uint8_t is_init)
 {
+    // only get the intermediate value during the first round and
+    // only when we are actually encrypting the plain text
+    if (round == 0 && is_init == 0) {
+        uint32_t intermediate_value;
+        intermediate_value = sbox[0][arg >> 24];
+        // printf("intermediate value\t%x\n", intermediate_value >> 24);
+        printf("%x", __builtin_popcount(intermediate_value >> 24));
+    }
+
+    // Original code
 	uint32_t var = sbox[0][arg >> 24] + sbox[1][(uint8_t)(arg >> 16)];
 	return (var ^ sbox[2][(uint8_t)(arg >> 8)]) + sbox[3][(uint8_t)(arg)];
 }
 
 void 
-_encrypt(uint32_t *left, uint32_t *right)
+_encrypt(uint32_t *left, uint32_t *right, uint8_t is_init)
 {
 	uint32_t i, t;
 	for (i = 0; i < 16; i++) {
 		*left  ^= pbox[i];
-		*right ^= feistel_function(*left);
+		*right ^= feistel_function(*left, i, is_init);
 		
 		SWAP(*left, *right, t);
 	}
@@ -25,22 +36,6 @@ _encrypt(uint32_t *left, uint32_t *right)
 	SWAP(*left, *right, t);
 	*right  ^= pbox[16];
 	*left ^= pbox[17];
-}
-
-void
-_decrypt(uint32_t *left, uint32_t *right)
-{
-	uint32_t i, t;
-	for (i = 17; i > 1; i--) {
-		*left  ^= pbox[i];
-		*right ^= feistel_function(*left);
-
-		SWAP(*left, *right, t);
-	}
-
-	SWAP(*left, *right, t);
-	*right ^=  pbox[1];
-	*left  ^= pbox[0];
 }
 
 void
@@ -59,14 +54,14 @@ blowfish_init(uint8_t key[], int size)
 
 	/* encrypt the zeroes, modifying the p-array and s-boxes accordingly */
 	for (i = 0; i <= 17; i += 2) {
-		_encrypt(&left, &right);
+		_encrypt(&left, &right, 1);
 		pbox[i]     = left;
 		pbox[i + 1] = right;
 	}
 
 	for (i = 0; i <= 3; i++) {
 		for (j = 0; j <= 254; j += 2) {
-			_encrypt(&left, &right);
+			_encrypt(&left, &right, 1);
 			sbox[i][j]     = left;
 			sbox[i][j + 1] = right;
 		}
@@ -94,7 +89,7 @@ blowfish_encrypt(uint8_t data[], int padsize)
 		left   = (uint32_t)(chunk >> 32);
 		right  = (uint32_t)(chunk);
 
-		_encrypt(&left, &right);
+		_encrypt(&left, &right, 0);
 
 		/* merge encrypted halves into a single 8 byte chunk again */
 		chunk = 0x0000000000000000;
@@ -106,34 +101,3 @@ blowfish_encrypt(uint8_t data[], int padsize)
 	}
 	return encrypted;
 }
-
-uint8_t *
-blowfish_decrypt(uint8_t crypt_data[], int padsize)
-{
-	uint8_t *decrypted = malloc(sizeof *decrypted * padsize);
-	uint8_t byte;
-	uint32_t i, j, index = 0;
-	uint32_t left, right, datasize, factor;
-	uint64_t chunk;
-	
-	datasize = padsize;
-
-	for (i = 0; i < datasize; i += 8) {
-		chunk = 0x0000000000000000;
-		memmove(&chunk, crypt_data + i, sizeof(chunk));
-
-		left = right = 0x00000000;
-		left   = (uint32_t)(chunk >> 32);
-		right  = (uint32_t)(chunk);
-
-		_decrypt(&left, &right);
-
-		chunk = 0x0000000000000000;
-		chunk |= left; chunk <<= 32;
-		chunk |= right;
-		
-		memmove(decrypted + i, &chunk, sizeof(chunk));
-	}
-	return decrypted;
-}
-

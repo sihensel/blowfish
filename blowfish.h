@@ -17,7 +17,7 @@ _encrypt(uint32_t *left, uint32_t *right, uint8_t is_init);
 void
 blowfish_init(uint8_t key[], int padsize);
 
-uint8_t *
-blowfish_encrypt(uint8_t data[], int padsize);
+void
+blowfish_encrypt(uint8_t data[], uint8_t ct[]);
 
 #endif

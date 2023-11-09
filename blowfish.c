@@ -14,7 +14,7 @@ feistel_function(uint32_t arg, uint8_t round, uint8_t is_init)
         uint32_t intermediate_value;
         intermediate_value = sbox[0][arg >> 24];
         // printf("intermediate value\t%x\n", intermediate_value >> 24);
-        printf("%x", __builtin_popcount(intermediate_value >> 24));
+        // printf("%x", __builtin_popcount(intermediate_value >> 24));
     }
 
     // Original code
@@ -68,36 +68,30 @@ blowfish_init(uint8_t key[], int size)
 	}
 }
 
-uint8_t *
-blowfish_encrypt(uint8_t data[], int padsize)
+void
+blowfish_encrypt(uint8_t data[], uint8_t ct[])
 {
-	uint8_t *encrypted = malloc(sizeof *encrypted * padsize);
 	uint8_t byte;
 	uint32_t i, j, index = 0;
-	uint32_t left, right, datasize, factor;
+	uint32_t left, right, factor;
 	uint64_t chunk;
-	
-	datasize = padsize;
 
-	for (i = 0; i < datasize; i += 8) {
-		/* make 8 byte chunks */
-		chunk = 0x0000000000000000;
-		memmove(&chunk, data + i, sizeof(chunk)); 
+    /* make 8 byte chunks */
+    chunk = 0x0000000000000000;
+    memmove(&chunk, data, sizeof(chunk));
 
-		/* split into two 4 byte chunks */
-		left = right = 0x00000000;
-		left   = (uint32_t)(chunk >> 32);
-		right  = (uint32_t)(chunk);
+    /* split into two 4 byte chunks */
+    left = right = 0x00000000;
+    left   = (uint32_t)(chunk >> 32);
+    right  = (uint32_t)(chunk);
 
-		_encrypt(&left, &right, 0);
+    _encrypt(&left, &right, 0);
 
-		/* merge encrypted halves into a single 8 byte chunk again */
-		chunk = 0x0000000000000000;
-		chunk |= left; chunk <<= 32;
-		chunk |= right;
-		
-		/* append the chunk into the answer */
-		memmove(encrypted + i, &chunk, sizeof(chunk));
-	}
-	return encrypted;
+    /* merge encrypted halves into a single 8 byte chunk again */
+    chunk = 0x0000000000000000;
+    chunk |= left; chunk <<= 32;
+    chunk |= right;
+    printf("%016llX\t<- chunk\n", chunk);
+
+    memcpy(ct, &chunk, sizeof(chunk));
 }

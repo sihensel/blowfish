@@ -11,7 +11,7 @@
 
 /* change these to change the ciphertext and the secret key */
 // #define PLAINTEXT "123"
-#define KEY       "A"
+#define KEY       "AAAAAAAA"
 
 int main(int argc, char *argv[])
 {
@@ -40,28 +40,18 @@ int main(int argc, char *argv[])
 	Osize = strlen(data);            KOsize = strlen(key);
 	Psize = ceil(Osize / 8.0) * 8;   KPsize = ceil(KOsize / 8.0) * 8;
 	Pbyte = Psize - Osize;           KPbyte = KPsize - KOsize;
-	
+
 	/* padding bytes added to the data and key */
 	memset(data + Osize, Pbyte, sizeof *data * Pbyte);
 	memset(key + KOsize, KPbyte, sizeof *key * KPbyte);
 
 	blowfish_init(key, KPsize);
-	
-    // printf("Input:\t%x\n", atoi(argv[1]));
-    // printf("Data before enc:\t%x\n", data);
-    // printf("Psize:\t%x\n", Psize);
-	encrypted = blowfish_encrypt(data, Psize);
-	
-	// printf("encrypted data: ");
-	// i = 0;
-	// while (i < Psize) {
-	// 	printf("%.2X%.2X%.2X%.2X ", encrypted[i], encrypted[i + 1],
-	// 			encrypted[i + 2], encrypted[i + 3]);
-	// 	printf("%.2X%.2X%.2X%.2X ", encrypted[i + 4], encrypted[i + 5],
-	// 			encrypted[i + 6], encrypted[i + 7]);
-	// 	i += 8;
-	// }
-	// printf("\n");
+
+    uint8_t ct[8];
+    blowfish_encrypt(data, ct);
+
+    printf("%02X%02X%02X%02X%02X%02X%02X%02X\n",
+            ct[0], ct[1], ct[2], ct[3], ct[4], ct[5], ct[6], ct[7]);
 
 	return 0;
 }

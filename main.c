@@ -11,7 +11,7 @@
 
 /* change these to change the ciphertext and the secret key */
 // #define PLAINTEXT "123"
-#define KEY       "AAAAAAAA"
+#define KEY       "A"
 
 int main(int argc, char *argv[])
 {
@@ -44,6 +44,7 @@ int main(int argc, char *argv[])
 	/* padding bytes added to the data and key */
 	memset(data + Osize, Pbyte, sizeof *data * Pbyte);
 	memset(key + KOsize, KPbyte, sizeof *key * KPbyte);
+    printf("%0000X\n", key);
 
 	blowfish_init(key, KPsize);
 

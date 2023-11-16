@@ -10,11 +10,25 @@ feistel_function(uint32_t arg, uint8_t round, uint8_t is_init)
 {
     // only get the intermediate value during the first round and
     // only when we are actually encrypting the plain text
-    if (round == 0 && is_init == 0) {
-        uint32_t intermediate_value;
+    if (round <= 3 && is_init == 0) {
+        printf("\nRound %d\n", round + 1);
+        uint32_t intermediate_value = 0;
+
         intermediate_value = sbox[0][arg >> 24];
-        // printf("intermediate value\t%x\n", intermediate_value >> 24);
-        // printf("%x", __builtin_popcount(intermediate_value >> 24));
+        printf("intermediate value\t%X\n", intermediate_value);
+        printf("HW\t%d\n", __builtin_popcount(intermediate_value));
+
+        intermediate_value = sbox[1][(uint8_t) arg >> 16];
+        printf("intermediate value\t%02X\n", intermediate_value);
+        printf("HW\t%d\n", __builtin_popcount(intermediate_value));
+
+        intermediate_value = sbox[2][(uint8_t) arg >> 8];
+        printf("intermediate value\t%02X\n", intermediate_value);
+        printf("HW\t%d\n", __builtin_popcount(intermediate_value));
+
+        intermediate_value = sbox[3][(uint8_t) arg];
+        printf("intermediate value\t%02X\n", intermediate_value);
+        printf("HW\t%d\n", __builtin_popcount(intermediate_value));
     }
 
     // Original code
@@ -30,8 +44,10 @@ _encrypt(uint32_t *left, uint32_t *right, uint8_t is_init)
 		*left  ^= pbox[i];
 		*right ^= feistel_function(*left, i, is_init);
 		
+        if (i == 3) { break; }
 		SWAP(*left, *right, t);
 	}
+    return;
 
 	SWAP(*left, *right, t);
 	*right  ^= pbox[16];

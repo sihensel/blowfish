@@ -10,25 +10,54 @@ feistel_function(uint32_t arg, uint8_t round, uint8_t is_init)
 {
     // only get the intermediate value during the first round and
     // only when we are actually encrypting the plain text
-    if (round <= 3 && is_init == 0) {
-        printf("\nRound %d\n", round + 1);
-        uint32_t intermediate_value = 0;
+    if (round == 0 && is_init == 0) {
+        // printf("\nRound %d\n", round + 1);
+        uint32_t a = 0, b = 0, c = 0, d = 0;
 
-        intermediate_value = sbox[0][arg >> 24];
-        printf("intermediate value\t%X\n", intermediate_value);
-        printf("HW\t%d\n", __builtin_popcount(intermediate_value));
+        a = sbox[0][(uint8_t) (arg >> 24)];
+        // printf("intermediate value\t%02X\n", a);
+        // printf("HW\t%d\n", __builtin_popcount(a));
+        printf("%d ", __builtin_popcount(a));
 
-        intermediate_value = sbox[1][(uint8_t) arg >> 16];
-        printf("intermediate value\t%02X\n", intermediate_value);
-        printf("HW\t%d\n", __builtin_popcount(intermediate_value));
+        b = sbox[1][(uint8_t)(arg >> 16)];
+        // printf("intermediate value\t%02X\n", b);
+        printf("%d ", __builtin_popcount(b));
 
-        intermediate_value = sbox[2][(uint8_t) arg >> 8];
-        printf("intermediate value\t%02X\n", intermediate_value);
-        printf("HW\t%d\n", __builtin_popcount(intermediate_value));
+        c = sbox[2][(uint8_t)(arg >> 8)];
+        // printf("intermediate value\t%02X\n", c);
+        printf("%d ", __builtin_popcount(c));
 
-        intermediate_value = sbox[3][(uint8_t) arg];
-        printf("intermediate value\t%02X\n", intermediate_value);
-        printf("HW\t%d\n", __builtin_popcount(intermediate_value));
+        d = sbox[3][(uint8_t)(arg)];
+        // printf("intermediate value\t%02X\n", d);
+        printf("%d", __builtin_popcount(d));
+        printf("\n");
+
+        // printf("arg\t%X\n", arg);
+
+        // for (int i = 0; i<256; i++) {
+        //     if (sbox[0][i] == a) {
+        //         printf("Index\t%X\n", i);
+        //         break;
+        //     }
+        // }
+        // for (int i = 0; i<256; i++) {
+        //     if (sbox[1][i] == b) {
+        //         printf("Index\t%X\n", i);
+        //         break;
+        //     }
+        // }
+        // for (int i = 0; i<256; i++) {
+        //     if (sbox[2][i] == c) {
+        //         printf("Index\t%X\n", i);
+        //         break;
+        //     }
+        // }
+        // for (int i = 0; i<256; i++) {
+        //     if (sbox[3][i] == d) {
+        //         printf("Index\t%X\n", i);
+        //         break;
+        //     }
+        // }
     }
 
     // Original code
@@ -41,13 +70,19 @@ _encrypt(uint32_t *left, uint32_t *right, uint8_t is_init)
 {
 	uint32_t i, t;
 	for (i = 0; i < 16; i++) {
+        // if (is_init == 0) {
+        //     printf("left plaintext\t%X\n", *left);
+        //     printf("round key\t%X\n", pbox[i]);
+        //     printf("arg\t%X\n", pbox[i] ^ *left);
+        //     printf("check\t%X\n", 0x4D9B90CC ^ *left);
+        // }
 		*left  ^= pbox[i];
 		*right ^= feistel_function(*left, i, is_init);
 		
-        if (i == 3) { break; }
 		SWAP(*left, *right, t);
+        // stop after the first round of encryption to save some time
+        if (is_init == 0 && i == 0) { return; }
 	}
-    return;
 
 	SWAP(*left, *right, t);
 	*right  ^= pbox[16];
@@ -107,7 +142,7 @@ blowfish_encrypt(uint8_t data[], uint8_t ct[])
     chunk = 0x0000000000000000;
     chunk |= left; chunk <<= 32;
     chunk |= right;
-    printf("%016llX\t<- chunk\n", chunk);
+    // printf("%016llX\t<- chunk\n", chunk);
 
     memcpy(ct, &chunk, sizeof(chunk));
 }

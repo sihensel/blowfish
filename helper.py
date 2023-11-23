@@ -1,12 +1,14 @@
 import random
 import string
 import subprocess
+import json
+import os
 
-alphabet = string.ascii_letters + string.digits
+alphabet = string.digits + string.ascii_letters
 
 def gen_plaintexts():
     ''' generate random 8-character plaintexts '''
-    return [''.join(random.choice(alphabet) for _ in range(8)) for _ in range(1)]
+    return [''.join(random.choice(alphabet) for _ in range(8)) for _ in range(500)]
 
 p = gen_plaintexts()
 
@@ -16,18 +18,20 @@ def compile_blowfish():
     rc = subprocess.call(args)
     if rc != 0:
         print("Error compiling Blowfish")
+        exit()
 
-compile_blowfish()
+# compile_blowfish()
 
-# get the hamming weights
-result = []
+# get the hamming weights after each Sbox for each plaintext
+data = dict()
 for i in p:
-    args = ("./blowfish", str(i))
-    popen = subprocess.Popen(args, stdout=subprocess.PIPE)
-    popen.wait()
-    output = popen.stdout.read()
-    print("Plaintext", i)
-    print(output.decode())
-    # result.append([i, output.decode()])
+    args = ("./blowfish", i)
+    result = subprocess.run(args, capture_output=True)
+    data[i] = [int(i) for i in result.stdout.decode().split()]
 
-# print(result)
+# make sure we have 500 different plaintexts
+assert len(data) == 500
+
+if not os.path.isfile("data.json"):
+    with open("data.json", "w") as fp:
+        json.dump(data, fp, indent=2)

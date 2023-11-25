@@ -50,7 +50,10 @@ int main(int argc, char *argv[])
 	blowfish_init(key, KPsize);
 
     uint8_t ct[8];
-    blowfish_encrypt(data, ct);
+
+    // FIXME add a conditional here that triggers based on CLI args
+    // blowfish_encrypt(data, ct);
+    model(data);
 
     // printf("%02X%02X%02X%02X%02X%02X%02X%02X\n",
     //         ct[0], ct[1], ct[2], ct[3], ct[4], ct[5], ct[6], ct[7]);

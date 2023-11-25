@@ -20,4 +20,7 @@ blowfish_init(uint8_t key[], int padsize);
 void
 blowfish_encrypt(uint8_t data[], uint8_t ct[]);
 
+void
+model(uint8_t data[]);
+
 #endif

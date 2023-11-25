@@ -146,3 +146,33 @@ blowfish_encrypt(uint8_t data[], uint8_t ct[])
 
     memcpy(ct, &chunk, sizeof(chunk));
 }
+
+void
+model(uint8_t data[])
+{
+	uint8_t byte;
+	uint32_t i, j, index = 0;
+	uint32_t left, right, factor;
+	uint64_t chunk;
+
+    /* make 8 byte chunks */
+    chunk = 0x0000000000000000;
+    memmove(&chunk, data, sizeof(chunk));
+
+    /* split into two 4 byte chunks */
+    left = right = 0x00000000;
+    left   = (uint32_t)(chunk >> 32);
+    right  = (uint32_t)(chunk);
+
+    uint32_t int_value;
+
+    // test key hypothesis
+    for (int i = 0; i < 256; i++) {
+        // start with the fourth sbox
+        int_value = sbox[3][(uint8_t)(left ^ (i << 0))];
+        printf("%d ", __builtin_popcount(int_value));
+    }
+    printf("\n");
+    // check the first round key
+    // printf("%X\n", pbox[0]);
+}

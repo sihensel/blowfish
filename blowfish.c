@@ -164,15 +164,26 @@ model(uint8_t data[])
     left   = (uint32_t)(chunk >> 32);
     right  = (uint32_t)(chunk);
 
-    uint32_t int_value;
-
-    // test key hypothesis
-    for (int i = 0; i < 256; i++) {
-        // start with the fourth sbox
-        int_value = sbox[3][(uint8_t)(left ^ (i << 0))];
-        printf("%d ", __builtin_popcount(int_value));
-    }
-    printf("\n");
     // check the first round key
     // printf("%X\n", pbox[0]);
+
+    uint8_t shift_amount = 0;
+    uint32_t int_value;
+    // test key hypothesis
+    for (int i = 0; i < 4; i++) {
+        switch (i) {
+            case 0: shift_amount = 24; break;
+            case 1: shift_amount = 16; break;
+            case 2: shift_amount = 8; break;
+            case 3: shift_amount = 0; break;
+            default: shift_amount = 0; break;
+        }
+
+        for (uint32_t j = 0; j < 256; j++) {
+            // get the HW of the value after each sbox
+            int_value = sbox[i][(uint8_t)((left >> shift_amount) ^ j)];
+            printf("%d ", __builtin_popcount(int_value));
+        }
+        printf("\n");
+    }
 }

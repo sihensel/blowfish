@@ -15,14 +15,10 @@
 
 int main(int argc, char *argv[])
 {
-    if (argc == 1) {
-        printf("ERROR: requires at least on argument\n");
-        return 0 ;
+    if (argc < 3) {
+        printf("Usage: ./blowfish encrypt|model <plaintext>\n");
+        return 0;
     }
-
-    // convert the input to an int and cast to to a char
-    // uint8_t p = (char) atoi(argv[1]);
-    // printf("%x\n", p);
 
 	int i, Osize, Psize, Pbyte;
 	int KOsize, KPsize, KPbyte;
@@ -34,7 +30,7 @@ int main(int argc, char *argv[])
 	memset(data, 0, DATASIZE);
 	memset(key,  0, KEYSIZE);
 
-	strncpy(data, argv[1], sizeof(data));
+	strncpy(data, argv[2], sizeof(data));
 	strncpy(key, KEY, sizeof(key));
 
 	Osize = strlen(data);            KOsize = strlen(key);
@@ -51,12 +47,14 @@ int main(int argc, char *argv[])
 
     uint8_t ct[8];
 
-    // FIXME add a conditional here that triggers based on CLI args
-    // blowfish_encrypt(data, ct);
-    model(data);
+    if (strcmp(argv[1], "encrypt") == 0) {
+        blowfish_encrypt(data, ct);
+    }
+    else if (strcmp(argv[1], "model") == 0) {
+        model(data);
+    }
 
     // printf("%02X%02X%02X%02X%02X%02X%02X%02X\n",
     //         ct[0], ct[1], ct[2], ct[3], ct[4], ct[5], ct[6], ct[7]);
-
 	return 0;
 }

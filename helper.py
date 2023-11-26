@@ -1,13 +1,7 @@
+import json
 import random
 import string
 import subprocess
-import json
-import os
-
-
-def gen_plaintexts():
-    alphabet = string.digits + string.ascii_letters
-    return [''.join(random.choice(alphabet) for _ in range(8)) for _ in range(500)]
 
 
 # Compile Blowfish
@@ -18,52 +12,63 @@ def compile_blowfish():
         print("Error compiling Blowfish")
         exit()
 
-# compile_blowfish()
 
 # get the hamming weights after each Sbox for each plaintext
 def gen_data():
     data = dict()
-    p = gen_plaintexts()
+    alphabet = string.digits + string.ascii_letters
+    p = [''.join(random.choice(alphabet) for _ in range(8)) for _ in range(100)]
 
     for i in p:
-        args = ("./blowfish", i)
+        args = ("./blowfish", "encrypt", i)
         result = subprocess.run(args, capture_output=True)
         data[i] = [int(i) for i in result.stdout.decode().split()]
 
-    # make sure we have 500 different plaintexts
-    assert len(data) == 500
+    # make sure we have 100 different plaintexts
+    assert len(data) == 100
 
-    if not os.path.isfile("data.json"):
-        with open("data.json", "w") as fp:
-            json.dump(data, fp, indent=2)
+    with open("data.json", "w") as fp:
+        json.dump(data, fp, indent=2)
 
-guess = []
+
 def model():
     with open("data.json", "r") as fp:
         data = json.load(fp)
 
+    guess_dict = {}
     # test all possible keys for each plaintext
     for plaintext in data:
-        args = ("./blowfish", plaintext)
+        args = ("./blowfish", "model", plaintext)
         result = subprocess.run(args, capture_output=True)
-        leakage = [int(i) for i in result.stdout.decode().split()]
-        guess.extend([i for i, x in enumerate(leakage) if x == data[plaintext][3]])
+        lines = result.stdout.decode().split("\n")[:4]
+
+        guess_dict[plaintext] = {}
+
+        for index, line in enumerate(lines):
+            leakage = [int(i) for i in line.split()]
+            guess = [i for i, x in enumerate(leakage) if x == data[plaintext][index]]
+            guess_dict[plaintext][index] = guess
 
     # FIXME this code is ugly, do this in numpy (which is also faster)
     # unique key guesses
-    unique_guesses = set(guess)
-    # map it in a dict with guess: count
-    guess_dict = {}
-    for i in unique_guesses:
-        guess_dict[i] = guess.count(i)
+    for i in range(4):
+        all_guesses = []
+        for item in guess_dict:
+            all_guesses.extend(guess_dict[item][i])
 
-    # sort it so the most popular guess is on top
-    guess_dict = dict(sorted(guess_dict.items(), key=lambda x: x[1], reverse=True))
+        unique_guesses = set(all_guesses)
+        a = {}
+        for x in unique_guesses:
+            a[x] = all_guesses.count(x)
 
-    # our first round key is 75ACA6F9
-    for i, x in enumerate(guess_dict):
-        print(f"{hex(x)}\t{guess_dict[x]}")
-        if i == 4:
-            break
+        a = dict(sorted(a.items(), key=lambda x: x[1], reverse=True))
 
+        print("Key hypothesis for keybyte %d" % i)
+        for index, x in enumerate(a):
+            print("%X\t%d" % (x, a[x]))
+            if index == 3:
+                break
+
+compile_blowfish()
+gen_data()
 model()

@@ -10,7 +10,7 @@ feistel_function(uint32_t arg, uint8_t round, uint8_t is_init)
 {
     // only get the intermediate value during the first round and
     // only when we are actually encrypting the plain text
-    if (round == 0 && is_init == 0) {
+    if (round == 1 && is_init == 0) {
         // printf("\nRound %d\n", round + 1);
         uint32_t a = 0, b = 0, c = 0, d = 0;
 
@@ -81,7 +81,7 @@ _encrypt(uint32_t *left, uint32_t *right, uint8_t is_init)
 		
 		SWAP(*left, *right, t);
         // stop after the first round of encryption to save some time
-        if (is_init == 0 && i == 0) { return; }
+        if (is_init == 0 && i == 1) { return; }
 	}
 
 	SWAP(*left, *right, t);
@@ -164,11 +164,17 @@ model(uint8_t data[])
     left   = (uint32_t)(chunk >> 32);
     right  = (uint32_t)(chunk);
 
-    // check the first round key
-    // printf("%X\n", pbox[0]);
+    // check the round key
+    // printf("%X\n", pbox[1]);
 
     uint8_t shift_amount = 0;
     uint32_t int_value;
+
+    // when trying to get the second round key
+    left ^= pbox[0];
+    right ^= feistel_function(left, 0, 1);
+    left = right;
+
     // test key hypothesis
     for (int i = 0; i < 4; i++) {
         switch (i) {

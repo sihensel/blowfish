@@ -20,10 +20,9 @@ int main(int argc, char *argv[])
         return 0;
     }
 
-	int i, Osize, Psize, Pbyte;
+	int Osize, Psize, Pbyte;
 	int KOsize, KPsize, KPbyte;
-	uint8_t *encrypted,
-	        key[KEYSIZE],
+	uint8_t key[KEYSIZE],
 	        data[DATASIZE];
 
 	/* no string NULL termination bugs now :) */

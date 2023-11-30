@@ -4,6 +4,9 @@ import string
 import subprocess
 
 
+NO_OF_PLAINTEXTS = 10
+
+
 # Compile Blowfish
 def compile_blowfish():
     args = ("/usr/bin/gcc", "blowfish.c", "main.c", "-o", "./blowfish", "-lm")
@@ -17,15 +20,19 @@ def compile_blowfish():
 def gen_data():
     data = dict()
     alphabet = string.digits + string.ascii_letters
-    p = [''.join(random.choice(alphabet) for _ in range(8)) for _ in range(100)]
+    p = [''.join(random.choice(alphabet) for _ in range(8)) for _ in range(NO_OF_PLAINTEXTS)]
 
     for i in p:
         args = ("./blowfish", "encrypt", i)
         result = subprocess.run(args, capture_output=True)
-        data[i] = [int(i) for i in result.stdout.decode().split()]
+        lines = result.stdout.decode().split('\n')
+        data[i] = []
+        for line in lines:
+            if line:
+                a = [int(i) for i in line.split()]
+                data[i].append(a)
 
-    # make sure we have 100 different plaintexts
-    assert len(data) == 100
+    assert len(data) == NO_OF_PLAINTEXTS
 
     with open("data.json", "w") as fp:
         json.dump(data, fp, indent=2)
@@ -69,6 +76,6 @@ def model():
             if index == 3:
                 break
 
-compile_blowfish()
+# compile_blowfish()
 gen_data()
-model()
+# model()

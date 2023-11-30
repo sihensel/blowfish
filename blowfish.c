@@ -8,61 +8,29 @@
 uint32_t 
 feistel_function(uint32_t arg, uint8_t round, uint8_t is_init)
 {
-    // only get the intermediate value during the first round and
-    // only when we are actually encrypting the plain text
-    if (round == 1 && is_init == 0) {
-        // printf("\nRound %d\n", round + 1);
-        uint32_t a = 0, b = 0, c = 0, d = 0;
+    uint32_t a = 0, b = 0, c = 0, d = 0;
+    uint32_t int_value;
 
-        a = sbox[0][(uint8_t) (arg >> 24)];
-        // printf("intermediate value\t%02X\n", a);
-        // printf("HW\t%d\n", __builtin_popcount(a));
+    a = sbox[0][(uint8_t)(arg >> 24)];
+    b = sbox[1][(uint8_t)(arg >> 16)];
+    c = sbox[2][(uint8_t)(arg >> 8)];
+    d = sbox[3][(uint8_t)(arg)];
+
+    // only calc the hamming weight when we are actually encrypting
+    if (is_init == 0) {
         printf("%d ", __builtin_popcount(a));
-
-        b = sbox[1][(uint8_t)(arg >> 16)];
-        // printf("intermediate value\t%02X\n", b);
         printf("%d ", __builtin_popcount(b));
-
-        c = sbox[2][(uint8_t)(arg >> 8)];
-        // printf("intermediate value\t%02X\n", c);
         printf("%d ", __builtin_popcount(c));
-
-        d = sbox[3][(uint8_t)(arg)];
-        // printf("intermediate value\t%02X\n", d);
-        printf("%d", __builtin_popcount(d));
-        printf("\n");
-
-        // printf("arg\t%X\n", arg);
-
-        // for (int i = 0; i<256; i++) {
-        //     if (sbox[0][i] == a) {
-        //         printf("Index\t%X\n", i);
-        //         break;
-        //     }
-        // }
-        // for (int i = 0; i<256; i++) {
-        //     if (sbox[1][i] == b) {
-        //         printf("Index\t%X\n", i);
-        //         break;
-        //     }
-        // }
-        // for (int i = 0; i<256; i++) {
-        //     if (sbox[2][i] == c) {
-        //         printf("Index\t%X\n", i);
-        //         break;
-        //     }
-        // }
-        // for (int i = 0; i<256; i++) {
-        //     if (sbox[3][i] == d) {
-        //         printf("Index\t%X\n", i);
-        //         break;
-        //     }
-        // }
+        printf("%d ", __builtin_popcount(d));
     }
 
-    // Original code
-	uint32_t var = sbox[0][arg >> 24] + sbox[1][(uint8_t)(arg >> 16)];
-	return (var ^ sbox[2][(uint8_t)(arg >> 8)]) + sbox[3][(uint8_t)(arg)];
+    int_value = a + b;
+    if (is_init == 0) { printf("%d ", __builtin_popcount(int_value)); }
+    int_value ^= c;
+    if (is_init == 0) { printf("%d ", __builtin_popcount(int_value)); }
+    int_value += d;
+    if (is_init == 0) { printf("%d ", __builtin_popcount(int_value)); }
+	return int_value;
 }
 
 void 
@@ -70,23 +38,22 @@ _encrypt(uint32_t *left, uint32_t *right, uint8_t is_init)
 {
 	uint32_t i, t;
 	for (i = 0; i < 16; i++) {
-        // if (is_init == 0) {
-        //     printf("left plaintext\t%X\n", *left);
-        //     printf("round key\t%X\n", pbox[i]);
-        //     printf("arg\t%X\n", pbox[i] ^ *left);
-        //     printf("check\t%X\n", 0x4D9B90CC ^ *left);
-        // }
-		*left  ^= pbox[i];
+		*left ^= pbox[i];
+        if (is_init == 0) { printf("%d ", __builtin_popcount(*left)); }
 		*right ^= feistel_function(*left, i, is_init);
+        if (is_init == 0) { printf("%d\n", __builtin_popcount(*right)); }
 		
 		SWAP(*left, *right, t);
-        // stop after the first round of encryption to save some time
-        if (is_init == 0 && i == 1) { return; }
 	}
+    // we will ignore the last two round keys for now
+    return;
 
 	SWAP(*left, *right, t);
 	*right  ^= pbox[16];
+    if (is_init == 0) { printf("%d\n", __builtin_popcount(*right)); }
+
 	*left ^= pbox[17];
+    if (is_init == 0) { printf("%d\n", __builtin_popcount(*left)); }
 }
 
 void
@@ -122,9 +89,7 @@ blowfish_init(uint8_t key[], int size)
 void
 blowfish_encrypt(uint8_t data[], uint8_t ct[])
 {
-	uint8_t byte;
-	uint32_t i, j, index = 0;
-	uint32_t left, right, factor;
+	uint32_t left, right;
 	uint64_t chunk;
 
     /* make 8 byte chunks */
@@ -150,10 +115,9 @@ blowfish_encrypt(uint8_t data[], uint8_t ct[])
 void
 model(uint8_t data[])
 {
-	uint8_t byte;
-	uint32_t i, j, index = 0;
-	uint32_t left, right, factor;
+	uint32_t left, right;
 	uint64_t chunk;
+    uint32_t left_k;    // left half after XOR with round key (our key hypothesis)
 
     /* make 8 byte chunks */
     chunk = 0x0000000000000000;
@@ -168,28 +132,39 @@ model(uint8_t data[])
     // printf("%X\n", pbox[1]);
 
     uint8_t shift_amount = 0;
-    uint32_t int_value;
+	uint32_t i, t;
 
-    // when trying to get the second round key
-    left ^= pbox[0];
-    right ^= feistel_function(left, 0, 1);
-    left = right;
+    // do 16 rounds of blowfish
+	for (i = 0; i < 16; i++) {
 
-    // test key hypothesis
-    for (int i = 0; i < 4; i++) {
-        switch (i) {
-            case 0: shift_amount = 24; break;
-            case 1: shift_amount = 16; break;
-            case 2: shift_amount = 8; break;
-            case 3: shift_amount = 0; break;
-            default: shift_amount = 0; break;
+        // try each byte of the 32-bit round key
+        for (uint8_t k = 0; k < 4; k++) {
+            switch (k) {
+                case 0: shift_amount = 24; break;
+                case 1: shift_amount = 16; break;
+                case 2: shift_amount = 8; break;
+                case 3: shift_amount = 0; break;
+            }
+
+            // guess each possible value of each key byte
+            for (uint32_t j = 0; j < 256; j++) {
+                left_k = left ^ (j << shift_amount);
+                printf("%d ", __builtin_popcount(left_k));
+                right ^= feistel_function(left_k, 0, 0);
+                printf("%d\n", __builtin_popcount(right));
+
+            }
+            SWAP(left_k, right, t);
         }
+	}
+    // we will ignore the last two round keys for now
+    return;
 
-        for (uint32_t j = 0; j < 256; j++) {
-            // get the HW of the value after each sbox
-            int_value = sbox[i][(uint8_t)((left >> shift_amount) ^ j)];
-            printf("%d ", __builtin_popcount(int_value));
-        }
-        printf("\n");
-    }
+	SWAP(left, right, t);
+	right  ^= pbox[16];
+    printf("%d\n", __builtin_popcount(right));
+
+	left ^= pbox[17];
+    printf("%d\n", __builtin_popcount(left));
+    return;
 }

@@ -2,9 +2,10 @@ import json
 import random
 import string
 import subprocess
+import numpy as np
 
 
-NO_OF_PLAINTEXTS = 10
+NO_OF_PLAINTEXTS = 100
 
 
 # Compile Blowfish
@@ -20,18 +21,18 @@ def compile_blowfish():
 def gen_data():
     data = dict()
     alphabet = string.digits + string.ascii_letters
-    p = [''.join(random.choice(alphabet) for _ in range(8)) for _ in range(NO_OF_PLAINTEXTS)]
+    plaintexts = [''.join(random.choice(alphabet) for _ in range(8)) for _ in range(NO_OF_PLAINTEXTS)]
 
-    for i in p:
-        args = ("./blowfish", "encrypt", i)
+    for plaintext in plaintexts:
+        args = ("./blowfish", "encrypt", plaintext)
         result = subprocess.run(args, capture_output=True)
         lines = result.stdout.decode().split('\n')
-        data[i] = []
         for line in lines:
             if line:
-                a = [int(i) for i in line.split()]
-                data[i].append(a)
+                values = [int(i) for i in line.split()]
+                data[plaintext] = values
 
+    # make sure we have no duplikate plaintexts
     assert len(data) == NO_OF_PLAINTEXTS
 
     with open("data.json", "w") as fp:
@@ -42,40 +43,37 @@ def model():
     with open("data.json", "r") as fp:
         data = json.load(fp)
 
-    guess_dict = {}
-    # test all possible keys for each plaintext
+    # build the trace array (HW of intermediate values during first round)
+    trace_array = []
+    for i in data:
+        trace_array.append(data[i])
+
+    # get the hamming weight for a single key guess (in this case 0)
+    hw_array = []
     for plaintext in data:
         args = ("./blowfish", "model", plaintext)
         result = subprocess.run(args, capture_output=True)
-        lines = result.stdout.decode().split("\n")[:4]
+        hw = [int(i) for i in result.stdout.decode().split()]
+        hw_array.append(hw)
 
-        guess_dict[plaintext] = {}
+    trace_array = np.array(trace_array)
+    hw_array = np.array(hw_array)
 
-        for index, line in enumerate(lines):
-            leakage = [int(i) for i in line.split()]
-            guess = [i for i, x in enumerate(leakage) if x == data[plaintext][index]]
-            guess_dict[plaintext][index] = guess
+    # get the correlation across all intermediate values for each key hypothesis
+    for i in range(256):
+        print("Keyguess: %X" % i)
 
-    # FIXME this code is ugly, do this in numpy (which is also faster)
-    # unique key guesses
-    for i in range(4):
-        all_guesses = []
-        for item in guess_dict:
-            all_guesses.extend(guess_dict[item][i])
+        # we use 9 intermediate values
+        # test only the seocond value for now (which is after the 1st sbox)
+        for j in [1]:
+            # take a vertical slice as a sample
+            hw_sample = hw_array[:, i]
+            trace_sample = trace_array[:, j]
 
-        unique_guesses = set(all_guesses)
-        a = {}
-        for x in unique_guesses:
-            a[x] = all_guesses.count(x)
+            pearson_corr = np.corrcoef(trace_sample, hw_sample)
+            print("{:.2f}".format(abs(pearson_corr[0, 1])))
 
-        a = dict(sorted(a.items(), key=lambda x: x[1], reverse=True))
-
-        print("Key hypothesis for keybyte %d" % i)
-        for index, x in enumerate(a):
-            print("%X\t%d" % (x, a[x]))
-            if index == 3:
-                break
 
 # compile_blowfish()
 gen_data()
-# model()
+model()

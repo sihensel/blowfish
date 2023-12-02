@@ -9,7 +9,7 @@ uint32_t
 feistel_function(uint32_t arg, uint8_t round, uint8_t is_init)
 {
     uint32_t a = 0, b = 0, c = 0, d = 0;
-    uint32_t int_value;
+    uint32_t int_value = 0;
 
     a = sbox[0][(uint8_t)(arg >> 24)];
     b = sbox[1][(uint8_t)(arg >> 16)];
@@ -30,6 +30,7 @@ feistel_function(uint32_t arg, uint8_t round, uint8_t is_init)
     if (is_init == 0) { printf("%d ", __builtin_popcount(int_value)); }
     int_value += d;
     if (is_init == 0) { printf("%d ", __builtin_popcount(int_value)); }
+
 	return int_value;
 }
 
@@ -42,11 +43,15 @@ _encrypt(uint32_t *left, uint32_t *right, uint8_t is_init)
         if (is_init == 0) { printf("%d ", __builtin_popcount(*left)); }
 		*right ^= feistel_function(*left, i, is_init);
         if (is_init == 0) { printf("%d\n", __builtin_popcount(*right)); }
+
+        // only try to get the first roundkey for now
+        if (is_init == 0) { return; }
 		
 		SWAP(*left, *right, t);
 	}
+
     // we will ignore the last two round keys for now
-    return;
+    if (is_init == 0) { return; }
 
 	SWAP(*left, *right, t);
 	*right  ^= pbox[16];
@@ -129,7 +134,7 @@ model(uint8_t data[])
     right  = (uint32_t)(chunk);
 
     // check the round key
-    // printf("%X\n", pbox[1]);
+    // printf("%X\n", pbox[0]);
 
     uint8_t shift_amount = 0;
 	uint32_t i, t;
@@ -148,13 +153,20 @@ model(uint8_t data[])
 
             // guess each possible value of each key byte
             for (uint32_t j = 0; j < 256; j++) {
-                left_k = left ^ (j << shift_amount);
-                printf("%d ", __builtin_popcount(left_k));
-                right ^= feistel_function(left_k, 0, 0);
-                printf("%d\n", __builtin_popcount(right));
+                uint32_t int_value = 0;
+
+                int_value = sbox[k][(uint8_t)((left >> shift_amount) ^ j)];
+                printf("%d ", __builtin_popcount(int_value));
+
+                // left_k = left ^ (j << shift_amount);
+                // printf("%d ", __builtin_popcount(left_k));
+                // right ^= feistel_function(left_k, 0, 0);
+                // printf("%d\n", __builtin_popcount(right));
 
             }
-            SWAP(left_k, right, t);
+            printf("\n");
+            return;
+            // SWAP(left_k, right, t);
         }
 	}
     // we will ignore the last two round keys for now

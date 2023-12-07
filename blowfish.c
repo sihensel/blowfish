@@ -6,7 +6,7 @@
 #include "constants.h"
 
 uint32_t 
-feistel_function(uint32_t arg, uint8_t round, uint8_t is_init)
+feistel_function(uint32_t arg, uint8_t is_init)
 {
     uint32_t a = 0, b = 0, c = 0, d = 0;
     uint32_t int_value = 0;
@@ -41,11 +41,11 @@ _encrypt(uint32_t *left, uint32_t *right, uint8_t is_init)
 	for (i = 0; i < 16; i++) {
 		*left ^= pbox[i];
         if (is_init == 0) { printf("%d ", __builtin_popcount(*left)); }
-		*right ^= feistel_function(*left, i, is_init);
-        if (is_init == 0) { printf("%d\n", __builtin_popcount(*right)); }
+		*right ^= feistel_function(*left, is_init);
+        if (is_init == 0) { printf("%d ", __builtin_popcount(*right)); }
 
         // only try to get the first roundkey for now
-        if (is_init == 0) { return; }
+        // if (is_init == 0) { return; }
 		
 		SWAP(*left, *right, t);
 	}
@@ -134,42 +134,41 @@ model(uint8_t data[])
     right  = (uint32_t)(chunk);
 
     // check the round key
-    // printf("%X\n", pbox[0]);
+    // printf("%X\n", pbox[1]);
 
     uint8_t shift_amount = 0;
 	uint32_t i, t;
 
-    // do 16 rounds of blowfish
-	for (i = 0; i < 16; i++) {
+    left ^= pbox[0];
+    right ^= feistel_function(left, 1);
+    SWAP(left, right, t);
 
-        // try each byte of the 32-bit round key
-        for (uint8_t k = 0; k < 4; k++) {
-            switch (k) {
-                case 0: shift_amount = 24; break;
-                case 1: shift_amount = 16; break;
-                case 2: shift_amount = 8; break;
-                case 3: shift_amount = 0; break;
-            }
-
-            // guess each possible value of each key byte
-            for (uint32_t j = 0; j < 256; j++) {
-                uint32_t int_value = 0;
-
-                int_value = sbox[k][(uint8_t)((left >> shift_amount) ^ j)];
-                printf("%d ", __builtin_popcount(int_value));
-
-                // left_k = left ^ (j << shift_amount);
-                // printf("%d ", __builtin_popcount(left_k));
-                // right ^= feistel_function(left_k, 0, 0);
-                // printf("%d\n", __builtin_popcount(right));
-
-            }
-            printf("\n");
-            return;
-            // SWAP(left_k, right, t);
+    // try each byte of the 32-bit round key
+    for (uint8_t k = 0; k < 4; k++) {
+        switch (k) {
+            case 0: shift_amount = 24; break;
+            case 1: shift_amount = 16; break;
+            case 2: shift_amount = 8; break;
+            case 3: shift_amount = 0; break;
         }
-	}
-    // we will ignore the last two round keys for now
+
+        // guess each possible value of each key byte
+        for (uint32_t j = 0; j < 256; j++) {
+            uint32_t int_value = 0;
+
+            int_value = sbox[k][(uint8_t)((left >> shift_amount) ^ j)];
+            printf("%d ", __builtin_popcount(int_value));
+
+            // left_k = left ^ (j << shift_amount);
+            // printf("%d ", __builtin_popcount(left_k));
+            // right ^= feistel_function(left_k, 0);
+            // printf("%d\n", __builtin_popcount(right));
+
+        }
+        printf("\n");
+        // return;
+        // SWAP(left_k, right, t);
+    }
     return;
 
 	SWAP(left, right, t);

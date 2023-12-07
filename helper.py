@@ -5,7 +5,7 @@ import subprocess
 import numpy as np
 
 
-NO_OF_PLAINTEXTS = 100
+NO_OF_PLAINTEXTS = 50
 
 
 # Compile Blowfish
@@ -32,7 +32,7 @@ def gen_data():
                 values = [int(i) for i in line.split()]
                 data[plaintext] = values
 
-    # make sure we have no duplikate plaintexts
+    # make sure we have no duplicate plaintexts
     assert len(data) == NO_OF_PLAINTEXTS
 
     with open("data.json", "w") as fp:
@@ -48,32 +48,41 @@ def model():
     for i in data:
         trace_array.append(data[i])
 
-    # get the hamming weight for a single key guess (in this case 0)
-    hw_array = []
-    for plaintext in data:
-        args = ("./blowfish", "model", plaintext)
-        result = subprocess.run(args, capture_output=True)
-        hw = [int(i) for i in result.stdout.decode().split()]
-        hw_array.append(hw)
+    for key_byte in range(4):
 
-    trace_array = np.array(trace_array)
-    hw_array = np.array(hw_array)
+        hw_array = []
+        for plaintext in data:
+            args = ("./blowfish", "model", plaintext)
+            result = subprocess.run(args, capture_output=True)
+            lines = result.stdout.decode().split("\n")[:-1]
+            hw = [int(i) for i in lines[key_byte].split()]
+            hw_array.append(hw)
 
-    # get the correlation across all intermediate values for each key hypothesis
-    for i in range(256):
-        print("Keyguess: %X" % i)
+        trace_array = np.array(trace_array)
+        hw_array = np.array(hw_array)
 
-        # we use 9 intermediate values
-        # test only the seocond value for now (which is after the 1st sbox)
-        for j in [1]:
-            # take a vertical slice as a sample
-            hw_sample = hw_array[:, i]
-            trace_sample = trace_array[:, j]
+        # get the correlation across all intermediate values for each key hypothesis
+        all_corrs = []
+        for i in range(256):
 
-            pearson_corr = np.corrcoef(trace_sample, hw_sample)
-            print("{:.2f}".format(abs(pearson_corr[0, 1])))
+            corr = []
+            # 9 intermediate values per round * 16 rounds = 144
+            for j in range(144):
+                # take a vertical slice as a sample
+                hw_sample = hw_array[:, i]
+                trace_sample = trace_array[:, j]
+
+                pearson_corr = np.corrcoef(trace_sample, hw_sample)
+                corr.append(float("%.2f" % abs(pearson_corr[0, 1])))
+            all_corrs.append(corr)
+
+        all_corrs = np.array(all_corrs)
+        # get the value with the highest correlation
+        key_guess = np.where(all_corrs == np.amax(all_corrs))
+
+        print("Keyguess 0x%X, index %d" % (key_guess[0][0], key_guess[1][0]))
 
 
-# compile_blowfish()
-gen_data()
+compile_blowfish()
+# gen_data()
 model()

@@ -9,7 +9,7 @@ typedef unsigned int           uint32_t;
 typedef unsigned long long int uint64_t;
 
 uint32_t 
-feistel_function(uint32_t arg, uint8_t round, uint8_t is_init);
+feistel_function(uint32_t arg, uint8_t is_init);
 
 void 
 _encrypt(uint32_t *left, uint32_t *right, uint8_t is_init);

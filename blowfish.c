@@ -51,7 +51,7 @@ _encrypt(uint32_t *left, uint32_t *right, uint8_t is_init)
 	}
 
     // we will ignore the last two round keys for now
-    if (is_init == 0) { return; }
+    // if (is_init == 0) { return; }
 
 	SWAP(*left, *right, t);
 	*right  ^= pbox[16];
@@ -201,9 +201,7 @@ model_cpa(uint8_t data[])
     uint32_t int_value = 0;
 
     for (uint32_t j = 0; j < 256; j++) {
-        uint32_t int_value = 0;
-
-        int_value = sbox[0][(uint8_t)((left >> 24) ^ j)];
+        int_value = sbox[0][((uint8_t)(left >> 24)) ^ j];
         printf("%d ", __builtin_popcount(int_value));
     }
     return;

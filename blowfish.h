@@ -23,4 +23,7 @@ blowfish_encrypt(uint8_t data[], uint8_t ct[]);
 void
 model(uint8_t data[]);
 
+void
+model_cpa(uint8_t data[]);
+
 #endif

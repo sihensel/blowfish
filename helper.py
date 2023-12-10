@@ -17,7 +17,6 @@ def compile_blowfish():
         exit()
 
 
-# get the hamming weights after each Sbox for each plaintext
 def gen_data():
     data = dict()
     alphabet = string.digits + string.ascii_letters

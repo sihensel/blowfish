@@ -52,6 +52,9 @@ int main(int argc, char *argv[])
     else if (strcmp(argv[1], "model") == 0) {
         model(data);
     }
+    else if (strcmp(argv[1], "cpa") == 0) {
+        model_cpa(data);
+    }
 
     // printf("%02X%02X%02X%02X%02X%02X%02X%02X\n",
     //         ct[0], ct[1], ct[2], ct[3], ct[4], ct[5], ct[6], ct[7]);

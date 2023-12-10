@@ -139,9 +139,10 @@ model(uint8_t data[])
     uint8_t shift_amount = 0;
 	uint32_t i, t;
 
-    left ^= pbox[0];
-    right ^= feistel_function(left, 1);
-    SWAP(left, right, t);
+    // for the second round key
+    // left ^= pbox[0];
+    // right ^= feistel_function(left, 1);
+    // SWAP(left, right, t);
 
     // try each byte of the 32-bit round key
     for (uint8_t k = 0; k < 4; k++) {
@@ -177,5 +178,33 @@ model(uint8_t data[])
 
 	left ^= pbox[17];
     printf("%d\n", __builtin_popcount(left));
+    return;
+}
+
+
+void
+model_cpa(uint8_t data[])
+{
+	uint32_t left, right;
+	uint64_t chunk;
+    uint32_t left_k;    // left half after XOR with round key (our key hypothesis)
+
+    /* make 8 byte chunks */
+    chunk = 0x0000000000000000;
+    memmove(&chunk, data, sizeof(chunk));
+
+    /* split into two 4 byte chunks */
+    left = right = 0x00000000;
+    left   = (uint32_t)(chunk >> 32);
+    right  = (uint32_t)(chunk);
+
+    uint32_t int_value = 0;
+
+    for (uint32_t j = 0; j < 256; j++) {
+        uint32_t int_value = 0;
+
+        int_value = sbox[0][(uint8_t)((left >> 24) ^ j)];
+        printf("%d ", __builtin_popcount(int_value));
+    }
     return;
 }

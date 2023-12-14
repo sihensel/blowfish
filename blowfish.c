@@ -11,6 +11,7 @@ feistel_function(uint32_t arg, uint8_t is_init)
     uint32_t a = 0, b = 0, c = 0, d = 0;
     uint32_t int_value = 0;
 
+    // if (is_init == 0) { printf("%X\n", pbox[0]); }
     a = sbox[0][(uint8_t)(arg >> 24)];
     b = sbox[1][(uint8_t)(arg >> 16)];
     c = sbox[2][(uint8_t)(arg >> 8)];
@@ -54,7 +55,7 @@ _encrypt(uint32_t *left, uint32_t *right, uint8_t is_init)
     // if (is_init == 0) { return; }
 
 	SWAP(*left, *right, t);
-	*right  ^= pbox[16];
+	*right ^= pbox[16];
     if (is_init == 0) { printf("%d\n", __builtin_popcount(*right)); }
 
 	*left ^= pbox[17];
@@ -139,11 +140,6 @@ model(uint8_t data[])
     uint8_t shift_amount = 0;
 	uint32_t i, t;
 
-    // for the second round key
-    // left ^= pbox[0];
-    // right ^= feistel_function(left, 1);
-    // SWAP(left, right, t);
-
     // try each byte of the 32-bit round key
     for (uint8_t k = 0; k < 4; k++) {
         switch (k) {
@@ -160,15 +156,8 @@ model(uint8_t data[])
             int_value = sbox[k][(uint8_t)((left >> shift_amount) ^ j)];
             printf("%d ", __builtin_popcount(int_value));
 
-            // left_k = left ^ (j << shift_amount);
-            // printf("%d ", __builtin_popcount(left_k));
-            // right ^= feistel_function(left_k, 0);
-            // printf("%d\n", __builtin_popcount(right));
-
         }
         printf("\n");
-        // return;
-        // SWAP(left_k, right, t);
     }
     return;
 
@@ -187,7 +176,7 @@ model_cpa(uint8_t data[])
 {
 	uint32_t left, right;
 	uint64_t chunk;
-    uint32_t left_k;    // left half after XOR with round key (our key hypothesis)
+	uint32_t t;
 
     /* make 8 byte chunks */
     chunk = 0x0000000000000000;
@@ -198,10 +187,24 @@ model_cpa(uint8_t data[])
     left   = (uint32_t)(chunk >> 32);
     right  = (uint32_t)(chunk);
 
+    printf("%X\n", pbox[5]);
+
     uint32_t int_value = 0;
+    for (int i = 0; i < 16; i++) {
+        // stop to get the key of round i + 1
+        if (i == 5) { break; }
+
+        left ^= pbox[i];
+        right ^= feistel_function(left, 1);
+
+        SWAP(left, right, t);
+    }
+    // SWAP(left, right, t);
 
     for (uint32_t j = 0; j < 256; j++) {
-        int_value = sbox[0][((uint8_t)(left >> 24)) ^ j];
+        // intermediate value during the 16 rounds
+        int_value = sbox[3][((uint8_t)(left >> 0)) ^ j];
+
         printf("%d ", __builtin_popcount(int_value));
     }
     return;

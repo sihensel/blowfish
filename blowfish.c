@@ -56,7 +56,7 @@ _encrypt(uint32_t *left, uint32_t *right, uint8_t is_init)
 
 	SWAP(*left, *right, t);
 	*right ^= pbox[16];
-    if (is_init == 0) { printf("%d\n", __builtin_popcount(*right)); }
+    if (is_init == 0) { printf("%d ", __builtin_popcount(*right)); }
 
 	*left ^= pbox[17];
     if (is_init == 0) { printf("%d\n", __builtin_popcount(*left)); }
@@ -176,7 +176,7 @@ model_cpa(uint8_t data[])
 {
 	uint32_t left, right;
 	uint64_t chunk;
-	uint32_t t;
+	uint32_t i, t;
 
     /* make 8 byte chunks */
     chunk = 0x0000000000000000;
@@ -187,23 +187,29 @@ model_cpa(uint8_t data[])
     left   = (uint32_t)(chunk >> 32);
     right  = (uint32_t)(chunk);
 
-    printf("%X\n", pbox[5]);
+    printf("%X\n", pbox[16]);
+    printf("%d\n", (uint8_t)pbox[16]);
+    return;
 
-    uint32_t int_value = 0;
-    for (int i = 0; i < 16; i++) {
+    // uint32_t int_value = 0;
+    uint8_t int_value = 0;
+    for (i = 0; i < 16; i++) {
         // stop to get the key of round i + 1
-        if (i == 5) { break; }
+        // if (i == 5) { break; }
 
         left ^= pbox[i];
         right ^= feistel_function(left, 1);
 
         SWAP(left, right, t);
     }
-    // SWAP(left, right, t);
+    SWAP(left, right, t);
 
     for (uint32_t j = 0; j < 256; j++) {
         // intermediate value during the 16 rounds
-        int_value = sbox[3][((uint8_t)(left >> 0)) ^ j];
+        // int_value = sbox[3][((uint8_t)(left >> 0)) ^ j];
+
+        // intermediate value for the last 2 round keys
+        int_value = (uint8_t) right ^ j;
 
         printf("%d ", __builtin_popcount(int_value));
     }

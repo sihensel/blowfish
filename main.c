@@ -15,8 +15,8 @@
 
 int main(int argc, char *argv[])
 {
-    if (argc < 3) {
-        printf("Usage: ./blowfish encrypt|model <plaintext>\n");
+    if (argc != 10) {
+        printf("Invalid number of args\n");
         return 0;
     }
 
@@ -29,7 +29,14 @@ int main(int argc, char *argv[])
 	memset(data, 0, DATASIZE);
 	memset(key,  0, KEYSIZE);
 
-	strncpy(data, argv[2], sizeof(data));
+    // the plaintext is input as 8 decimal strings now
+    uint8_t a;
+    for (int i = 0; i < 8; i++) {
+        a = (uint8_t) strtol(argv[i + 2], NULL, 10);
+        data[i] = a;
+    }
+
+	// strncpy(data, argv[2], sizeof(data));
 	strncpy(key, KEY, sizeof(key));
 
 	Osize = strlen(data);            KOsize = strlen(key);

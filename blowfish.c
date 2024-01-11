@@ -184,12 +184,11 @@ model_cpa(uint8_t data[])
 
     /* split into two 4 byte chunks */
     left = right = 0x00000000;
-    left   = (uint32_t)(chunk >> 32);
-    right  = (uint32_t)(chunk);
+    left  = (uint32_t)(chunk >> 32);
+    right = (uint32_t)(chunk);
 
-    printf("%X\n", pbox[16]);
-    printf("%d\n", (uint8_t)pbox[16]);
-    return;
+    // printf("%X\n", pbox[16]);
+    // printf("%d\n", (uint8_t)pbox[16]);
 
     // uint32_t int_value = 0;
     uint8_t int_value = 0;

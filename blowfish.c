@@ -187,14 +187,13 @@ model_cpa(uint8_t data[])
     left  = (uint32_t)(chunk >> 32);
     right = (uint32_t)(chunk);
 
-    // printf("%X\n", pbox[16]);
-    // printf("%d\n", (uint8_t)pbox[16]);
+    // printf("%X\n", pbox[0]);
+    // printf("%d\n", (uint8_t)(pbox[16] >> 16));
 
-    // uint32_t int_value = 0;
-    uint8_t int_value = 0;
+    uint32_t int_value = 0;
     for (i = 0; i < 16; i++) {
         // stop to get the key of round i + 1
-        // if (i == 5) { break; }
+        // if (i == 0) { break; }
 
         left ^= pbox[i];
         right ^= feistel_function(left, 1);
@@ -205,12 +204,50 @@ model_cpa(uint8_t data[])
 
     for (uint32_t j = 0; j < 256; j++) {
         // intermediate value during the 16 rounds
-        // int_value = sbox[3][((uint8_t)(left >> 0)) ^ j];
+        // int_value = sbox[0][((uint8_t)(left >> 24)) ^ j];
 
-        // intermediate value for the last 2 round keys
-        int_value = (uint8_t) right ^ j;
+        // get the last two round keys
+        // first byte
+        int_value = (uint8_t)(right >> 24) ^ j;
+
+        // second byte
+        // right ^= (uint32_t)(0xD4 << 24);
+        // int_value = (uint8_t)(right >> 16) ^ j;
+
+        // third byte
+        // right ^= (uint32_t)(0xD455 << 16);
+        // int_value = (uint8_t)(right >> 8) ^ j;
+
+        // fourth byte
+        // right ^= (uint32_t)(0xD455EA << 8);
+        // int_value = (uint8_t)(right) ^ j;
 
         printf("%d ", __builtin_popcount(int_value));
     }
     return;
+}
+
+void
+reverse_sbox(uint8_t data[])
+{
+	uint32_t left, right;
+	uint64_t chunk;
+	uint32_t i, t;
+
+    /* make 8 byte chunks */
+    chunk = 0x0000000000000000;
+    memmove(&chunk, data, sizeof(chunk));
+
+    /* split into two 4 byte chunks */
+    left = right = 0x00000000;
+    left  = (uint32_t)(chunk >> 32);
+    right = (uint32_t)(chunk);
+
+    // printf("left:\t%X\n", left);
+    // printf("right:\t%X\n", right);
+
+    left ^= pbox[0];
+    right ^= feistel_function(left, 1);
+
+    printf("%d ", __builtin_popcount(right));
 }

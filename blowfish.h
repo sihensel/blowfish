@@ -26,4 +26,7 @@ model(uint8_t data[]);
 void
 model_cpa(uint8_t data[]);
 
+void
+reverse_sbox(uint8_t data[]);
+
 #endif

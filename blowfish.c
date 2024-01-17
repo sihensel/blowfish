@@ -234,20 +234,37 @@ reverse_sbox(uint8_t data[])
 	uint64_t chunk;
 	uint32_t i, t;
 
-    /* make 8 byte chunks */
     chunk = 0x0000000000000000;
     memmove(&chunk, data, sizeof(chunk));
 
-    /* split into two 4 byte chunks */
-    left = right = 0x00000000;
+    left  = 0x00000000;
+    right = 0x00000000;
     left  = (uint32_t)(chunk >> 32);
     right = (uint32_t)(chunk);
 
-    // printf("left:\t%X\n", left);
-    // printf("right:\t%X\n", right);
+    // uint32_t temp = 0;
+    // left ^= pbox[0];
+    // temp = feistel_function(left, 1);
+    // printf("%X\n", temp);
 
-    left ^= pbox[0];
-    right ^= feistel_function(left, 1);
+    // TODO use 3 different constant left halves
+    // -> we get 3 different results for f()
+    // create a linear equation system and find values for d
+    // G + d = y
 
-    printf("%d ", __builtin_popcount(right));
+    uint8_t int_value = 0;
+    right ^= (uint32_t)(0x7D10F1 << 8);
+    for (i = 0; i < 256; i++) {
+
+        // int_value = (uint8_t)(right >> 24) ^ i;
+
+        // right ^= (uint32_t)(0x7D << 24);
+        // int_value = (uint8_t)(right >> 16) ^ i;
+
+        int_value = (uint8_t)(right >> 8) ^ i;
+
+        // right ^= (uint32_t)(0x7D10F1 << 8);
+        // int_value = (uint8_t)(right) ^ i;
+        printf("%d ", __builtin_popcount(int_value));
+    }
 }

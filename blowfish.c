@@ -11,7 +11,6 @@ feistel_function(uint32_t arg, uint8_t is_init)
     uint32_t a = 0, b = 0, c = 0, d = 0;
     uint32_t int_value = 0;
 
-    // if (is_init == 0) { printf("%X\n", pbox[0]); }
     a = sbox[0][(uint8_t)(arg >> 24)];
     b = sbox[1][(uint8_t)(arg >> 16)];
     c = sbox[2][(uint8_t)(arg >> 8)];
@@ -90,6 +89,12 @@ blowfish_init(uint8_t key[], int size)
 			sbox[i][j + 1] = right;
 		}
 	}
+    // for (int x=0; x<4;x++) {
+    //     for (int y=0;y<256;y++) {
+    //         printf("%X\n", sbox[x][y]);
+    //     }
+    //     printf("\n\n");
+    // }
 }
 
 void
@@ -242,15 +247,11 @@ reverse_sbox(uint8_t data[])
     left  = (uint32_t)(chunk >> 32);
     right = (uint32_t)(chunk);
 
-    // uint32_t temp = 0;
-    // left ^= pbox[0];
-    // temp = feistel_function(left, 1);
-    // printf("%X\n", temp);
-
-    // TODO use 3 different constant left halves
-    // -> we get 3 different results for f()
-    // create a linear equation system and find values for d
-    // G + d = y
+    uint32_t temp = 0;
+    left ^= pbox[0];
+    temp = feistel_function(left, 1);
+    printf("%X\t%u\n", temp, temp);
+    return;
 
     uint8_t int_value = 0;
     right ^= (uint32_t)(0x7D10F1 << 8);

@@ -3,6 +3,7 @@ import random
 import string
 import subprocess
 import numpy as np
+from sage.all import *
 
 
 NO_OF_PLAINTEXTS = 50
@@ -127,7 +128,36 @@ def cpa():
     print("Keyguess 0x%X, index %d" % (key_guess[0][0], key_guess[1][0]))
 
 
+def reverse_engineer_sbox():
+    R = IntegerModRing(2**32)
+    Y = [0x61ED6F99, 0x10A8021F, 0x59E97934]
+    Y = [0x936E4F71, 0xAC4F115B, 0x24DEE258]
+    Y = [0xB4F3496B, 0x74067BEE, 0x61ED6F99]
+
+    M = Matrix(R, [
+        [1, 1, -2],
+        [1, -2, 1],
+        [-2, 1, 1]
+    ])
+    b = vector(R, [
+        Y[0] + Y[1] - 2*Y[2],
+        Y[0] - 2*Y[1] + Y[2],
+        -2*Y[0] + Y[1] + Y[2]
+    ])
+    b = vector(R, [
+        Y[0] + Y[1] - Y[2] - Y[2],
+        Y[0] - Y[1] - Y[1] + Y[2],
+        -Y[0] - Y[0] + Y[1] + Y[2]
+    ])
+
+    s = M.solve_right(b)
+    print(s)
+    for i in s:
+        print("%X" % i)
+
+
 # compile_blowfish()
 # gen_data()
 # model()
-cpa()
+# cpa()
+reverse_engineer_sbox()

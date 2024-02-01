@@ -15,11 +15,64 @@ feistel_function(uint32_t arg)
     b = sbox[1][(uint8_t)(arg >> 16)];
     c = sbox[2][(uint8_t)(arg >> 8)];
     d = sbox[3][(uint8_t)(arg)];
+     
+    /* dummy instructions
+    int r = rand() % 30;
+    for (int i = 0; i < r; i++) {
+        int j = rand() % 2;
+        int v = rand() % 4;
+        if (i % 2 == 0) {
+            // gerade
+            if (j == 1) {
+                switch(v) {
+                        case 0: a = a + 0; break;
+                        case 1: b = b + 0; break;
+                        case 2: c = c + 0; break;
+                        case 3: d = d + 0; break;
+                }
+            }
+            else {
+                switch(v) {
+                        case 0: a = a / 1; break;
+                        case 1: b = b / 1; break;
+                        case 2: c = c / 1; break;
+                        case 3: d = d / 1; break;
+                }
+            }
+        }
+        else {
+            // ungerade
+            if (j == 1) {
+                switch(v) {
+                        case 0: a = a * 1; break;
+                        case 1: b = b * 1; break;
+                        case 2: c = c * 1; break;
+                        case 3: d = d * 1; break;
+                }
+            }
+            else {
+                switch(v) {
+                        case 0: a = a - 0; break;
+                        case 1: b = b - 0; break;
+                        case 2: c = c - 0; break;
+                        case 3: d = d - 0; break;
+                }
+            }
+        }
+    }
+     */
 
     int_value = a + b;
     int_value ^= c;
     int_value += d;
 	return int_value;
+
+	/* dummy instuctions
+	for (int i = 0; i < 3; i++) {
+        int_value = int_value + 0;
+        int_value = int_value - 0;
+    }
+    */
 }
 
 void 
@@ -30,6 +83,11 @@ _encrypt(uint32_t *left, uint32_t *right)
 		*left ^= pbox[i];
 		*right ^= feistel_function(*left);
 
+    /* Dummy XOR Operation
+        *left ^= *left;
+        *right ^= *right;
+        *left ^= 0x00000000;
+    */
 		SWAP(*left, *right, t);
 	}
 
@@ -44,6 +102,8 @@ blowfish_init(uint8_t key[], int size)
 	int keysize = size, i, j;
 	uint32_t left = 0x00000000, right = 0x00000000;
 
+    /* Hier könnte man random Instructions einbauen (vor oder nach der Subkey generation)*/
+
 	/* subkey generation */
 	for (i = 0; i < 18; i++) {
 		pbox[i] ^= ((uint32_t)key[(i + 0) % keysize] << 24) | 
@@ -51,6 +111,15 @@ blowfish_init(uint8_t key[], int size)
 		           ((uint32_t)key[(i + 2) % keysize] <<  8) | 
 		           ((uint32_t)key[(i + 3) % keysize]);
 	}
+
+	/*  Dummy-Berechnung
+    uint32_t dummy_left = 0x00000000, dummy_right = 0x00000000;
+    for (i = 0; i < 40; i++) {
+        dummy_left ^= i;
+        dummy_right ^= i + 1;
+        _encrypt(&dummy_left, &dummy_right);
+	*/
+
 
 	/* encrypt the zeroes, modifying the p-array and s-boxes accordingly */
 	for (i = 0; i <= 17; i += 2) {

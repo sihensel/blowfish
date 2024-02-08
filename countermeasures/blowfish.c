@@ -16,7 +16,7 @@ feistel_function(uint32_t arg)
     c = sbox[2][(uint8_t)(arg >> 8)];
     d = sbox[3][(uint8_t)(arg)];
      
-    /* dummy instructions
+    /* dummy instructions  */
     int r = rand() % 30;
     for (int i = 0; i < r; i++) {
         int j = rand() % 2;
@@ -60,7 +60,6 @@ feistel_function(uint32_t arg)
             }
         }
     }
-     */
 
     int_value = a + b;
     int_value ^= c;
@@ -82,12 +81,18 @@ _encrypt(uint32_t *left, uint32_t *right)
 	for (i = 0; i < 16; i++) {
 		*left ^= pbox[i];
 		*right ^= feistel_function(*left);
-
-    /* Dummy XOR Operation
-        *left ^= *left;
-        *right ^= *right;
-        *left ^= 0x00000000;
-    */
+        
+        /*  Dummy-Berechnung */
+        uint32_t dummy_left = 0x00000000;
+        uint32_t dummy_right = 0x00000000;
+        
+        int r = (rand() % (1500 - 500 + 1) + 500);
+        for (i = 0; i < r; i++) {
+            dummy_left ^= i;
+            dummy_right ^= i + 1;
+        }
+        
+        
 		SWAP(*left, *right, t);
 	}
 

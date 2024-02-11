@@ -16,7 +16,7 @@ feistel_function(uint32_t arg)
     c = sbox[2][(uint8_t)(arg >> 8)];
     d = sbox[3][(uint8_t)(arg)];
      
-    /* dummy instructions  */
+    /* dummy instructions */
     int r = rand() % 30;
     for (int i = 0; i < r; i++) {
         int j = rand() % 2;
@@ -82,11 +82,11 @@ _encrypt(uint32_t *left, uint32_t *right)
 		*left ^= pbox[i];
 		*right ^= feistel_function(*left);
         
-        /*  Dummy-Berechnung */
+        /*  Dummy-Berechnung*/
         uint32_t dummy_left = 0x00000000;
         uint32_t dummy_right = 0x00000000;
         
-        int r = (rand() % (1500 - 500 + 1) + 500);
+        int r = rand() % 30;
         for (i = 0; i < r; i++) {
             dummy_left ^= i;
             dummy_right ^= i + 1;
@@ -95,9 +95,20 @@ _encrypt(uint32_t *left, uint32_t *right)
         
 		SWAP(*left, *right, t);
 	}
-
+   
 	SWAP(*left, *right, t);
 	*right ^= pbox[16];
+    
+    /*  Dummy-Berechnung
+    uint32_t dummy_left = 0x00000000;
+    uint32_t dummy_right = 0x00000000;
+
+    int r = rand() % 30;
+    for (i = 0; i < r; i++) {
+        dummy_left ^= i;
+        dummy_right ^= i + 1;
+    }*/
+    
 	*left ^= pbox[17];
 }
 

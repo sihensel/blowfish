@@ -15,18 +15,24 @@ void
 _encrypt(uint32_t *left, uint32_t *right, uint8_t is_init);
 
 void
+_decrypt(uint32_t *left, uint32_t *right);
+
+void
 blowfish_init(uint8_t key[], int padsize);
 
 void
 blowfish_encrypt(uint8_t data[], uint8_t ct[]);
 
 void
-model(uint8_t data[]);
+blowfish_decrypt(uint8_t data[], uint8_t ct[]);
 
 void
-model_cpa(uint8_t data[]);
+attack_sbox(uint8_t data[]);
 
 void
-reverse_sbox(uint8_t data[]);
+attack_feistel(uint8_t data[]);
+
+void
+attack_xor(uint8_t data[]);
 
 #endif

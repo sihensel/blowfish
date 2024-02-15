@@ -54,16 +54,17 @@ int main(int argc, char *argv[])
     uint8_t ct[8];
 
     if (strcmp(argv[1], "encrypt") == 0) {
+        // perform a regular blowfish encryption
         blowfish_encrypt(data, ct);
     }
-    else if (strcmp(argv[1], "model") == 0) {
-        model(data);
-    }
-    else if (strcmp(argv[1], "cpa") == 0) {
-        model_cpa(data);
-    }
     else if (strcmp(argv[1], "sbox") == 0) {
-        reverse_sbox(data);
+        attack_sbox(data);
+    }
+    else if (strcmp(argv[1], "feistel") == 0) {
+        attack_feistel(data);
+    }
+    else if (strcmp(argv[1], "xor") == 0) {
+        attack_xor(data);
     }
 
     // printf("%02X%02X%02X%02X%02X%02X%02X%02X\n",

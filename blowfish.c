@@ -6,7 +6,7 @@
 #include "constants.h"
 
 uint32_t 
-feistel_function(uint32_t arg, uint8_t is_init)
+feistel_function(uint32_t arg)
 {
     uint32_t a = 0, b = 0, c = 0, d = 0;
     uint32_t int_value = 0;
@@ -20,54 +20,55 @@ feistel_function(uint32_t arg, uint8_t is_init)
     int_value ^= c;
     int_value += d;
 
-	return int_value;
+    return int_value;
 }
 
 void 
-_encrypt(uint32_t *left, uint32_t *right, uint8_t is_init)
+_encrypt(uint32_t *left, uint32_t *right)
 {
-	uint32_t i, t;
-	for (i = 0; i < 16; i++) {
-		*left ^= pbox[i];
-		*right ^= feistel_function(*left, is_init);
-		
-		SWAP(*left, *right, t);
-	}
+    uint32_t i, t;
+    for (i = 0; i < 16; i++) {
+        *left ^= pbox[i];
+        *right ^= feistel_function(*left);
 
-	SWAP(*left, *right, t);
-	*right ^= pbox[16];
+        SWAP(*left, *right, t);
+    }
 
-	*left ^= pbox[17];
+    SWAP(*left, *right, t);
+    *right ^= pbox[16];
+
+    *left ^= pbox[17];
 }
 
 void
 blowfish_init(uint8_t key[], int size)
 {
-	int keysize = size, i, j;
-	uint32_t left = 0x00000000, right = 0x00000000;
+    int keysize = size, i, j;
+    uint32_t left = 0x00000000, right = 0x00000000;
 
-	/* subkey generation */
-	for (i = 0; i < 18; i++) {
-		pbox[i] ^= ((uint32_t)key[(i + 0) % keysize] << 24) | 
-		           ((uint32_t)key[(i + 1) % keysize] << 16) | 
-		           ((uint32_t)key[(i + 2) % keysize] <<  8) | 
-		           ((uint32_t)key[(i + 3) % keysize]);
-	}
+    /* subkey generation */
+    for (i = 0; i < 18; i++) {
+        pbox[i] ^= ((uint32_t)key[(i + 0) % keysize] << 24) |
+                   ((uint32_t)key[(i + 1) % keysize] << 16) |
+                   ((uint32_t)key[(i + 2) % keysize] <<  8) |
+                   ((uint32_t)key[(i + 3) % keysize]);
+    }
 
-	/* encrypt the zeroes, modifying the p-array and s-boxes accordingly */
-	for (i = 0; i <= 17; i += 2) {
-		_encrypt(&left, &right, 1);
-		pbox[i]     = left;
-		pbox[i + 1] = right;
-	}
+    /* encrypt the zeroes, modifying the p-array and s-boxes accordingly */
+    for (i = 0; i <= 17; i += 2) {
+        _encrypt(&left, &right);
+        pbox[i]     = left;
+        pbox[i + 1] = right;
+    }
 
-	for (i = 0; i <= 3; i++) {
-		for (j = 0; j <= 254; j += 2) {
-			_encrypt(&left, &right, 1);
-			sbox[i][j]     = left;
-			sbox[i][j + 1] = right;
-		}
-	}
+    for (i = 0; i <= 3; i++) {
+        for (j = 0; j <= 254; j += 2) {
+            _encrypt(&left, &right);
+            sbox[i][j]     = left;
+            sbox[i][j + 1] = right;
+        }
+    }
+    // dump sboxes after key scheduler
     // for (int x=0; x<4;x++) {
     //     for (int y=0;y<256;y++) {
     //         printf("%X\n", sbox[x][y]);
@@ -79,8 +80,8 @@ blowfish_init(uint8_t key[], int size)
 void
 blowfish_encrypt(uint8_t data[], uint8_t ct[])
 {
-	uint32_t left, right;
-	uint64_t chunk;
+    uint32_t left, right;
+    uint64_t chunk;
 
     /* make 8 byte chunks */
     chunk = 0x0000000000000000;
@@ -91,7 +92,7 @@ blowfish_encrypt(uint8_t data[], uint8_t ct[])
     left   = (uint32_t)(chunk >> 32);
     right  = (uint32_t)(chunk);
 
-    _encrypt(&left, &right, 0);
+    _encrypt(&left, &right);
 
     /* merge encrypted halves into a single 8 byte chunk again */
     chunk = 0x0000000000000000;
@@ -105,24 +106,24 @@ blowfish_encrypt(uint8_t data[], uint8_t ct[])
 void
 _decrypt(uint32_t *left, uint32_t *right)
 {
-	uint32_t i, t;
-	for (i = 17; i > 1; i--) {
-		*left  ^= pbox[i];
-		*right ^= feistel_function(*left, 1);
+    uint32_t i, t;
+    for (i = 17; i > 1; i--) {
+        *left  ^= pbox[i];
+        *right ^= feistel_function(*left);
 
-		SWAP(*left, *right, t);
-	}
+        SWAP(*left, *right, t);
+    }
 
-	SWAP(*left, *right, t);
-	*right ^=  pbox[1];
-	*left  ^= pbox[0];
+    SWAP(*left, *right, t);
+    *right ^=  pbox[1];
+    *left  ^= pbox[0];
 }
 
 void
 blowfish_decrypt(uint8_t data[], uint8_t ct[])
 {
-	uint32_t left, right;
-	uint64_t chunk;
+    uint32_t left, right;
+    uint64_t chunk;
 
     chunk = 0x0000000000000000;
     memmove(&chunk, data, sizeof(chunk));
@@ -145,9 +146,9 @@ attack_sbox(uint8_t data[])
 {
     // extract round keys via the s-box lookup
     // only works when sboxes are known
-	uint32_t left, right;
-	uint64_t chunk;
-	uint32_t i, t;
+    uint32_t left, right;
+    uint64_t chunk;
+    uint32_t i, t;
 
     /* make 8 byte chunks */
     chunk = 0x0000000000000000;
@@ -160,10 +161,10 @@ attack_sbox(uint8_t data[])
 
     for (i = 0; i < 16; i++) {
         // stop to get the key of round i + 1
-        // if (i == 0) { break; }
+        // if (i == 1) { break; }
 
         left ^= pbox[i];
-        right ^= feistel_function(left, 1);
+        right ^= feistel_function(left);
 
         SWAP(left, right, t);
     }
@@ -174,6 +175,9 @@ attack_sbox(uint8_t data[])
     for (uint32_t j = 0; j < 256; j++) {
         // intermediate value during the 16 rounds
         // int_value = sbox[0][((uint8_t)(left >> 24)) ^ j];
+        // int_value = sbox[1][((uint8_t)(left >> 16)) ^ j];
+        // int_value = sbox[2][((uint8_t)(left >> 8)) ^ j];
+        // int_value = sbox[3][((uint8_t)(left)) ^ j];
 
         // get the last two round keys
         // first byte
@@ -197,26 +201,52 @@ attack_sbox(uint8_t data[])
 }
 
 void
-attack_feistel(uint8_t data[])
+attack_xor(uint8_t data[])
 {
-    // attack the result of f()
-	uint32_t left, right;
-	uint64_t chunk;
-	uint32_t i, t;
+    // attack left half XOR p
+    uint32_t left;
+    uint64_t chunk;
 
     chunk = 0x0000000000000000;
     memmove(&chunk, data, sizeof(chunk));
 
     left  = 0x00000000;
-    right = 0x00000000;
     left  = (uint32_t)(chunk >> 32);
+
+    // insert previously extracted bytes here
+    left ^= (uint32_t)(0x75ACA6 << 8);
+
+    uint8_t int_value = 0;
+    for (uint32_t i = 0; i < 256; i++) {
+        // int_value = (uint8_t)(left >> 24) ^ i;
+
+        // int_value = (uint8_t)(left >> 16) ^ i;
+
+        // int_value = (uint8_t)(left >> 8) ^ i;
+
+        int_value = (uint8_t)(left) ^ i;
+        printf("%d ", __builtin_popcount(int_value));
+    }
+}
+
+void
+attack_feistel(uint8_t data[])
+{
+    // attack the result of f()
+    uint32_t right;
+    uint64_t chunk;
+
+    chunk = 0x0000000000000000;
+    memmove(&chunk, data, sizeof(chunk));
+
+    right = 0x00000000;
     right = (uint32_t)(chunk);
 
     // insert previously extracted bytes here
     // right ^= (uint32_t)(0x7D10F1 << 8);
 
     uint8_t int_value = 0;
-    for (i = 0; i < 256; i++) {
+    for (uint32_t i = 0; i < 256; i++) {
         int_value = (uint8_t)(right >> 24) ^ i;
 
         // int_value = (uint8_t)(right >> 16) ^ i;
@@ -229,35 +259,22 @@ attack_feistel(uint8_t data[])
 }
 
 void
-attack_xor(uint8_t data[])
+print_feistel(uint8_t data[])
 {
-    // attack left half XOR p
-	uint32_t left, right;
-	uint64_t chunk;
-	uint32_t i, t;
+    // print the result of f() for a given plaintext so we don't have to
+    // manually attack f() for all 500 plaintexts
+    uint32_t left;
+    uint64_t chunk;
 
     chunk = 0x0000000000000000;
     memmove(&chunk, data, sizeof(chunk));
 
     left  = 0x00000000;
-    right = 0x00000000;
     left  = (uint32_t)(chunk >> 32);
-    right = (uint32_t)(chunk);
 
-    // printf("%X", pbox[0]);
+    uint32_t temp = 0;
 
-    // insert previously extracted bytes here
-    // left ^= (uint32_t)(0x7D10F1 << 8);
-
-    uint8_t int_value = 0;
-    for (i = 0; i < 256; i++) {
-        int_value = (uint8_t)(left >> 24) ^ i;
-
-        // int_value = (uint8_t)(left >> 16) ^ i;
-
-        // int_value = (uint8_t)(left >> 8) ^ i;
-
-        // int_value = (uint8_t)(left) ^ i;
-        printf("%d ", __builtin_popcount(int_value));
-    }
+    left ^= pbox[0];
+    temp = feistel_function(left);
+    printf("%X", temp);
 }

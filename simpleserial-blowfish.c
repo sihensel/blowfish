@@ -31,48 +31,48 @@
 
 uint8_t get_key(uint8_t* k, uint8_t len)
 {
-	// Load key here
-	return 0x00;
+    // Load key here
+    return 0x00;
 }
 
 uint8_t get_pt(uint8_t *pt, uint8_t len)
 {
-	int i, Osize, Psize, Pbyte;
-	int KOsize, KPsize, KPbyte;
-	uint8_t key[KEYSIZE],
-	        data[DATASIZE];
+    int i, Osize, Psize, Pbyte;
+    int KOsize, KPsize, KPbyte;
+    uint8_t key[KEYSIZE],
+            data[DATASIZE];
     uint8_t ct[8];
 
-	/* no string NULL termination bugs now :) */
-	memset(data, 0, DATASIZE);
-	memset(key,  0, KEYSIZE);
+    /* no string NULL termination bugs now :) */
+    memset(data, 0, DATASIZE);
+    memset(key,  0, KEYSIZE);
 
-	strncpy(data, pt, sizeof(data));
-	strncpy(key, KEY, sizeof(key));
+    strncpy(data, pt, sizeof(data));
+    strncpy(key, KEY, sizeof(key));
 
-	Osize = strlen(data);            KOsize = strlen(key);
-	Psize = ceil(Osize / 8.0) * 8;   KPsize = ceil(KOsize / 8.0) * 8;
-	Pbyte = Psize - Osize;           KPbyte = KPsize - KOsize;
-	
-	/* padding bytes added to the data and key */
-	memset(data + Osize, Pbyte, sizeof *data * Pbyte);
-	memset(key + KOsize, KPbyte, sizeof *key * KPbyte);
+    Osize = strlen(data);            KOsize = strlen(key);
+    Psize = ceil(Osize / 8.0) * 8;   KPsize = ceil(KOsize / 8.0) * 8;
+    Pbyte = Psize - Osize;           KPbyte = KPsize - KOsize;
 
-	blowfish_init(key, KPsize);
-	
+    /* padding bytes added to the data and key */
+    memset(data + Osize, Pbyte, sizeof *data * Pbyte);
+    memset(key + KOsize, KPbyte, sizeof *key * KPbyte);
+
+    blowfish_init(key, KPsize);
+
     // Start our measurement here
     trigger_high();
     blowfish_encrypt(data, ct);
 
-	trigger_low();
-	simpleserial_put('r', 8, ct);
+    trigger_low();
+    simpleserial_put('r', 8, ct);
     return 0x00;
 }
 
 uint8_t reset(uint8_t* x, uint8_t len)
 {
-	// Reset key here if needed
-	return 0x00;
+    // Reset key here if needed
+    return 0x00;
 }
 
 void no_op(uint8_t* x, uint8_t len)
@@ -82,24 +82,24 @@ void no_op(uint8_t* x, uint8_t len)
 int main(void)
 {
     platform_init();
-	init_uart();
-	trigger_setup();
+    init_uart();
+    trigger_setup();
 
- 	/* Uncomment this to get a HELLO message for debug */
-	/*
-	putch('h');
-	putch('e');
-	putch('l');
-	putch('l');
-	putch('o');
-	putch('\n');
-	*/
+    /* Uncomment this to get a HELLO message for debug */
+    /*
+    putch('h');
+    putch('e');
+    putch('l');
+    putch('l');
+    putch('o');
+    putch('\n');
+    */
 
-	simpleserial_init();
-	simpleserial_addcmd('p', 8, get_pt);
-	simpleserial_addcmd('k', 16, get_key);
-	simpleserial_addcmd('x', 0, reset);
-	while(1)
-		simpleserial_get();
+    simpleserial_init();
+    simpleserial_addcmd('p', 8, get_pt);
+    simpleserial_addcmd('k', 16, get_key);
+    simpleserial_addcmd('x', 0, reset);
+    while(1)
+        simpleserial_get();
 }
 

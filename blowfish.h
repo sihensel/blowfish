@@ -9,10 +9,10 @@ typedef unsigned int           uint32_t;
 typedef unsigned long long int uint64_t;
 
 uint32_t 
-feistel_function(uint32_t arg, uint8_t is_init);
+feistel_function(uint32_t arg);
 
 void 
-_encrypt(uint32_t *left, uint32_t *right, uint8_t is_init);
+_encrypt(uint32_t *left, uint32_t *right);
 
 void
 _decrypt(uint32_t *left, uint32_t *right);
@@ -30,9 +30,12 @@ void
 attack_sbox(uint8_t data[]);
 
 void
+attack_xor(uint8_t data[]);
+
+void
 attack_feistel(uint8_t data[]);
 
 void
-attack_xor(uint8_t data[]);
+print_feistel(uint8_t data[]);
 
 #endif

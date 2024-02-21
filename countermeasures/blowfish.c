@@ -16,7 +16,7 @@ feistel_function(uint32_t arg)
     c = sbox[2][(uint8_t)(arg >> 8)];
     d = sbox[3][(uint8_t)(arg)];
      
-    /* dummy instructions */
+    /* dummy instructions 01 
     int r = rand() % 30;
     for (int i = 0; i < r; i++) {
         int j = rand() % 2;
@@ -59,19 +59,13 @@ feistel_function(uint32_t arg)
                 }
             }
         }
-    }
-
+    } */
+  
+    
     int_value = a + b;
     int_value ^= c;
     int_value += d;
 	return int_value;
-
-	/* dummy instuctions
-	for (int i = 0; i < 3; i++) {
-        int_value = int_value + 0;
-        int_value = int_value - 0;
-    }
-    */
 }
 
 void 
@@ -82,7 +76,7 @@ _encrypt(uint32_t *left, uint32_t *right)
 		*left ^= pbox[i];
 		*right ^= feistel_function(*left);
         
-        /*  Dummy-Berechnung*/
+        /*  Dummy-Berechnung 02 
         uint32_t dummy_left = 0x00000000;
         uint32_t dummy_right = 0x00000000;
         
@@ -90,25 +84,14 @@ _encrypt(uint32_t *left, uint32_t *right)
         for (i = 0; i < r; i++) {
             dummy_left ^= i;
             dummy_right ^= i + 1;
-        }
+        } */
         
         
 		SWAP(*left, *right, t);
 	}
    
 	SWAP(*left, *right, t);
-	*right ^= pbox[16];
-    
-    /*  Dummy-Berechnung
-    uint32_t dummy_left = 0x00000000;
-    uint32_t dummy_right = 0x00000000;
-
-    int r = rand() % 30;
-    for (i = 0; i < r; i++) {
-        dummy_left ^= i;
-        dummy_right ^= i + 1;
-    }*/
-    
+	*right ^= pbox[16];     
 	*left ^= pbox[17];
 }
 
@@ -118,7 +101,6 @@ blowfish_init(uint8_t key[], int size)
 	int keysize = size, i, j;
 	uint32_t left = 0x00000000, right = 0x00000000;
 
-    /* Hier könnte man random Instructions einbauen (vor oder nach der Subkey generation)*/
 
 	/* subkey generation */
 	for (i = 0; i < 18; i++) {
@@ -127,15 +109,6 @@ blowfish_init(uint8_t key[], int size)
 		           ((uint32_t)key[(i + 2) % keysize] <<  8) | 
 		           ((uint32_t)key[(i + 3) % keysize]);
 	}
-
-	/*  Dummy-Berechnung
-    uint32_t dummy_left = 0x00000000, dummy_right = 0x00000000;
-    for (i = 0; i < 40; i++) {
-        dummy_left ^= i;
-        dummy_right ^= i + 1;
-        _encrypt(&dummy_left, &dummy_right);
-	*/
-
 
 	/* encrypt the zeroes, modifying the p-array and s-boxes accordingly */
 	for (i = 0; i <= 17; i += 2) {

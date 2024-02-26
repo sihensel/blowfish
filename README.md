@@ -1,5 +1,43 @@
 # BLOWFISH ENCRYPTION ALGORITHM
 
+Fork of [https://github.com/prophet6250/blowfish-implementation](https://github.com/prophet6250/blowfish-implementation).
+
+## Compile the code
+
+```sh
+gcc blowfish.c main.c -o ./blowfish -lm
+```
+
+## Usage
+
+```sh
+./blowfish <arg> <plaintext>
+```
+
+`<arg>` can take the following parameters:
+
+| Arg | Description |
+| --- | --- |
+| `encrypt` | Performs a regular Blowfish encryption |
+| `sbox` | Attack model when attacking round keys via sboxes |
+| `xor` | Attack model when attacking round keys via XOR operations |
+| `feistel` | Attack model when attacking the result of `f()` |
+| `print_feistel` | Print the result of `f()` for a given input |
+
+`<plaintext>` consists of 8 input bytes in decimal form, delimited by a space, such as `1 2 3 4 5 6 7 8`.
+
+The encryption key is hardcoded in `main.c`.
+
+## Countermeasures
+
+Countermeasures are implemented in the `countermeasures` directory, which contains a separate copy of the code.
+Here, the blowfish binary only takes `<plaintext>` as an argument and always performs a regular Blowfish encryption.
+
+---
+
+*ORIGINAL README BELOW*
+
+
 ## ABOUT
 My Implementation of the 64-bit Blowfish Cryptographic block cipher
 
